@@ -5,7 +5,8 @@ import path from "path";
 import { glob } from "glob";
 import { PokemonCard, PokemonSet, CardsResponse, SetsResponse, FilterResponse, PokemonByPokedex, PokedexResponse } from "./types";
 
-const DATA_DIR = __dirname;
+// When compiled, __dirname will be 'dist/', so we need to go up one level to find data files
+const DATA_DIR = process.env.NODE_ENV === 'production' ? path.join(__dirname, '..') : __dirname;
 const app = express();
 
 // Enable CORS for iOS app
