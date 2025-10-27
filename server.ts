@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 import { glob } from "glob";
-import { PokemonCard, PokemonSet, CardsResponse, SetsResponse, FilterResponse } from "./types";
+import { PokemonCard, PokemonSet, CardsResponse, SetsResponse, FilterResponse, PokemonByPokedex, PokedexResponse } from "./types";
 
 const DATA_DIR = __dirname;
 const app = express();
@@ -176,6 +176,60 @@ app.get("/v2/sets", (req: Request, res: Response) => {
   console.log(`[REQUEST] GET /v2/sets - Query: ${JSON.stringify(req.query)}`);
   const response: SetsResponse = { sets: sets };
   console.log(`[RESPONSE] GET /v2/sets - Returned ${response.sets.length} sets`);
+  res.json(response);
+});
+
+app.get("/v2/pokemon", (req: Request, res: Response) => {
+  console.log(`[REQUEST] GET /v2/pokemon - Query: ${JSON.stringify(req.query)}`);
+
+  // Create a dictionary of sets by ID for quick lookup
+  const setsById: Record<string, PokemonSet> = {};
+  sets.forEach(set => {
+    setsById[set.id] = set;
+  });
+
+  // Group cards by Pokedex number
+  const pokemonByPokedex: Record<number, PokemonByPokedex> = {};
+
+  cards.forEach(card => {
+    // Skip cards without Pokedex numbers (trainers, energy, etc.)
+    if (!card.nationalPokedexNumbers || card.nationalPokedexNumbers.length === 0) {
+      return;
+    }
+
+    // Enrich card with full set data
+    let setId = card.set?.id;
+    if (!setId && card.id) {
+      setId = card.id.split("-")[0];
+    }
+    const fullSet = setId ? setsById[setId] : undefined;
+    const enrichedCard = {
+      ...card,
+      set: fullSet || card.set
+    };
+
+    // Add card to each Pokedex number it has (some cards have multiple)
+    card.nationalPokedexNumbers.forEach(pokedexNum => {
+      if (!pokemonByPokedex[pokedexNum]) {
+        pokemonByPokedex[pokedexNum] = {
+          pokedexNumber: pokedexNum,
+          name: card.name,
+          cards: []
+        };
+      }
+      pokemonByPokedex[pokedexNum].cards.push(enrichedCard);
+    });
+  });
+
+  // Convert to array and sort by Pokedex number
+  const pokemonArray = Object.values(pokemonByPokedex).sort((a, b) => a.pokedexNumber - b.pokedexNumber);
+
+  const response: PokedexResponse = {
+    pokemon: pokemonArray,
+    count: pokemonArray.length
+  };
+
+  console.log(`[RESPONSE] GET /v2/pokemon - Returned ${response.count} unique Pokemon with ${cards.length} total cards`);
   res.json(response);
 });
 

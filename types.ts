@@ -38,3 +38,14 @@ export interface FilterResponse {
     rarities: string[];
   };
 }
+
+export interface PokemonByPokedex {
+  pokedexNumber: number;
+  name: string;
+  cards: PokemonCard[];
+}
+
+export interface PokedexResponse {
+  pokemon: PokemonByPokedex[];
+  count: number;
+}
