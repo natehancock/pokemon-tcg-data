@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supeffective/dataset": "^4.1.1",
     "express": "^4.18.2",
     "glob": "^10.3.10"
   },

@@ -8,6 +8,14 @@ import { PokemonCard, PokemonSet, CardsResponse, SetsResponse, FilterResponse } 
 const DATA_DIR = __dirname;
 const app = express();
 
+// Enable CORS for iOS app
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
+
 // Load all cards into memory (adjust paths if you move things)
 const cardFiles = glob.sync(path.join(DATA_DIR, "cards/en/**/*.json"));
 const cards: PokemonCard[] = cardFiles.flatMap(f => JSON.parse(fs.readFileSync(f, "utf8")));
@@ -35,7 +43,7 @@ app.get("/v2/cards", (req: Request, res: Response) => {
     }
 
     // Find the full set data
-    const fullSet = setsById[setId];
+    const fullSet = setId ? setsById[setId] : undefined;
 
     // Return card with enriched set data
     return {
@@ -92,7 +100,7 @@ app.get("/v2/cards/filter", (req: Request, res: Response) => {
     }
 
     // Find the full set data
-    const fullSet = setsById[setId];
+    const fullSet = setId ? setsById[setId] : undefined;
 
     // Return card with enriched set data
     return {
@@ -137,7 +145,7 @@ app.get("/v2/cards/filter", (req: Request, res: Response) => {
   // Apply set filter
   if (selectedSets.length > 0) {
     filteredCards = filteredCards.filter(card => {
-      return selectedSets.includes(card.set?.id);
+      return card.set?.id && selectedSets.includes(card.set.id);
     });
   }
 
@@ -171,5 +179,5 @@ app.get("/v2/sets", (req: Request, res: Response) => {
   res.json(response);
 });
 
-const PORT = 3000;
-app.listen(PORT, () => console.log(`Local Pokémon TCG API on http://localhost:${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Pokémon TCG API running on port ${PORT}`));
