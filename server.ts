@@ -12,8 +12,6 @@ import { SuperEffectiveCdnClient } from "@supeffective/dataset";
 const DATA_DIR = process.env.NODE_ENV === 'production' ? path.join(__dirname, '..') : __dirname;
 const app = express();
 
-const data-set = SuperEffectiveCdnClient.
-
 // Enable CORS for iOS app
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
