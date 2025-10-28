@@ -3,6 +3,8 @@ import express, { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 import { glob } from "glob";
+import swaggerUi from "swagger-ui-express";
+import * as yaml from "yaml";
 import { PokemonCard, PokemonSet, CardsResponse, SetsResponse, FilterResponse, PokemonByPokedex, PokedexResponse } from "./types";
 
 // When compiled, __dirname will be 'dist/', so we need to go up one level to find data files
@@ -23,6 +25,28 @@ const cards: PokemonCard[] = cardFiles.flatMap(f => JSON.parse(fs.readFileSync(f
 
 const setFiles = glob.sync(path.join(DATA_DIR, "sets/*.json"));
 const sets: PokemonSet[] = setFiles.flatMap(f => JSON.parse(fs.readFileSync(f, "utf8")));
+
+// Load and parse OpenAPI specification
+const openApiSpecPath = path.join(DATA_DIR, "openapi.yaml");
+const openApiSpec = yaml.parse(fs.readFileSync(openApiSpecPath, "utf8"));
+
+// Serve Swagger UI at /docs
+app.use("/docs", swaggerUi.serve);
+app.get("/docs", swaggerUi.setup(openApiSpec, {
+  customCss: ".swagger-ui .topbar { display: none }",
+  customSiteTitle: "Pokemon TCG Data API Documentation"
+}));
+
+// Redirect root path to docs
+app.get("/", (req: Request, res: Response) => {
+  res.redirect("/docs");
+});
+
+// Serve the raw OpenAPI spec at /openapi.yaml
+app.get("/openapi.yaml", (req: Request, res: Response) => {
+  res.type("text/yaml");
+  res.send(fs.readFileSync(openApiSpecPath, "utf8"));
+});
 
 /// Get All Cards
 app.get("/v2/cards", (req: Request, res: Response) => {
