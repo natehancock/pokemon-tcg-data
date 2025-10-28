@@ -6,10 +6,13 @@ import { glob } from "glob";
 import swaggerUi from "swagger-ui-express";
 import * as yaml from "yaml";
 import { PokemonCard, PokemonSet, CardsResponse, SetsResponse, FilterResponse, PokemonByPokedex, PokedexResponse } from "./types";
+import { SuperEffectiveCdnClient } from "@supeffective/dataset";
 
 // When compiled, __dirname will be 'dist/', so we need to go up one level to find data files
 const DATA_DIR = process.env.NODE_ENV === 'production' ? path.join(__dirname, '..') : __dirname;
 const app = express();
+
+const data-set = SuperEffectiveCdnClient.
 
 // Enable CORS for iOS app
 app.use((req, res, next) => {

@@ -53,6 +53,12 @@ async function main() {
     const speciesCount = db.getDb().prepare('SELECT COUNT(*) as count FROM pokemon_species').get() as { count: number };
     console.log(`   Pokemon Species: ${speciesCount.count}`);
     
+    const pokedexCount = db.getDb().prepare('SELECT COUNT(*) as count FROM pokedexes').get() as { count: number };
+    console.log(`   Pokedexes: ${pokedexCount.count}`);
+    
+    const entriesCount = db.getDb().prepare('SELECT COUNT(*) as count FROM pokedex_entries').get() as { count: number };
+    console.log(`   Pokedex Entries: ${entriesCount.count}`);
+    
     // Test some queries
     console.log('\n🔍 Testing database queries...');
     

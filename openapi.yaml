@@ -21,6 +21,8 @@ tags:
     description: Card set operations
   - name: pokemon
     description: Pokemon-specific operations
+  - name: pokedexes
+    description: Pokedex operations
 
 paths:
   /cards:
@@ -101,6 +103,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /cards/{id}:
+    get:
+      tags:
+        - cards
+      summary: Get a single card
+      description: Returns a single Pokemon card by its ID (format "setId-cardNumber")
+      operationId: getCardById
+      parameters:
+        - name: id
+          in: path
+          description: Card ID in format "setId-cardNumber" (e.g., "base1-1")
+          required: true
+          schema:
+            type: string
+          example: base1-1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /sets:
     get:
       tags:
@@ -122,6 +159,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /sets/{id}:
+    get:
+      tags:
+        - sets
+      summary: Get a single set
+      description: Returns a single Pokemon TCG set by its ID
+      operationId: getSetById
+      parameters:
+        - name: id
+          in: path
+          description: Set ID (e.g., "base1", "jungle")
+          required: true
+          schema:
+            type: string
+          example: base1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetResponse'
+        '404':
+          description: Set not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /pokemon:
     get:
       tags:
@@ -136,6 +208,181 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PokedexResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pokemon/types:
+    get:
+      tags:
+        - pokemon
+      summary: Get all Pokemon types
+      description: Returns all Pokemon types with their colors and metadata
+      operationId: getPokemonTypes
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypesResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pokemon/moves:
+    get:
+      tags:
+        - pokemon
+      summary: Get all Pokemon moves
+      description: Returns all Pokemon moves from the move database
+      operationId: getPokemonMoves
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovesResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pokemon/abilities:
+    get:
+      tags:
+        - pokemon
+      summary: Get all Pokemon abilities
+      description: Returns all Pokemon abilities from the ability database
+      operationId: getPokemonAbilities
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilitiesResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pokemon/species:
+    get:
+      tags:
+        - pokemon
+      summary: Get all Pokemon species
+      description: Returns all Pokemon species with stats, types, and evolution data
+      operationId: getPokemonSpecies
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pokedexes:
+    get:
+      tags:
+        - pokedexes
+      summary: Get all Pokedexes
+      description: Returns all Pokedex types (National, Regional, etc.)
+      operationId: getAllPokedexes
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PokedexesResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pokedexes/{id}:
+    get:
+      tags:
+        - pokedexes
+      summary: Get a single Pokedex
+      description: Returns a specific Pokedex with its entries
+      operationId: getPokedexById
+      parameters:
+        - name: id
+          in: path
+          description: Pokedex ID (e.g., "national", "kanto")
+          required: true
+          schema:
+            type: string
+          example: national
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pokedex'
+        '404':
+          description: Pokedex not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pokedexes/{id}/entries:
+    get:
+      tags:
+        - pokedexes
+      summary: Get Pokedex entries
+      description: Returns all Pokemon entries for a specific Pokedex
+      operationId: getPokedexEntries
+      parameters:
+        - name: id
+          in: path
+          description: Pokedex ID (e.g., "national", "kanto")
+          required: true
+          schema:
+            type: string
+          example: national
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PokedexEntriesResponse'
+        '404':
+          description: Pokedex not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Server error
           content:
@@ -605,6 +852,280 @@ components:
         count:
           type: integer
           description: Number of unique Pokemon
+
+    CardResponse:
+      type: object
+      required:
+        - card
+      properties:
+        card:
+          $ref: '#/components/schemas/PokemonCard'
+
+    SetResponse:
+      type: object
+      required:
+        - set
+      properties:
+        set:
+          $ref: '#/components/schemas/SetInfo'
+
+    PokemonType:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: Type ID
+          example: 1
+        name:
+          type: string
+          description: Type name
+          example: Fire
+        color:
+          type: string
+          description: Type color (hex format)
+          example: "#FF0000"
+        isCanonical:
+          type: boolean
+          description: Whether this is a canonical Pokemon type
+          example: true
+
+    TypesResponse:
+      type: object
+      required:
+        - types
+      properties:
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokemonType'
+
+    PokemonMove:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: Move ID
+          example: 1
+        name:
+          type: string
+          description: Move name
+          example: Thunderbolt
+        power:
+          type: integer
+          description: Base power of the move
+          example: 90
+        accuracy:
+          type: integer
+          description: Accuracy percentage
+          example: 100
+        pp:
+          type: integer
+          description: Power points
+          example: 15
+        type:
+          type: string
+          description: Move type
+          example: Electric
+        damageClass:
+          type: string
+          description: Damage class (physical, special, status)
+          example: special
+        effectChance:
+          type: integer
+          description: Chance of effect occurring
+        generation:
+          type: integer
+          description: Generation introduced
+          example: 1
+        description:
+          type: string
+          description: Move description
+
+    MovesResponse:
+      type: object
+      required:
+        - moves
+      properties:
+        moves:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokemonMove'
+
+    PokemonAbility:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: Ability ID
+          example: 1
+        name:
+          type: string
+          description: Ability name
+          example: Static
+        description:
+          type: string
+          description: Ability description
+          example: The Pokémon is charged with static electricity and may paralyze attackers that make direct contact with it.
+        generation:
+          type: integer
+          description: Generation introduced
+          example: 3
+        isHidden:
+          type: boolean
+          description: Whether this is a hidden ability
+
+    AbilitiesResponse:
+      type: object
+      required:
+        - abilities
+      properties:
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokemonAbility'
+
+    PokemonSpecies:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: National Pokedex number
+          example: 25
+        name:
+          type: string
+          description: Pokemon name
+          example: Pikachu
+        types:
+          type: array
+          description: Pokemon types
+          items:
+            type: string
+          example: [Electric]
+        baseStats:
+          type: object
+          description: Base stats
+          properties:
+            hp:
+              type: integer
+            attack:
+              type: integer
+            defense:
+              type: integer
+            specialAttack:
+              type: integer
+            specialDefense:
+              type: integer
+            speed:
+              type: integer
+        height:
+          type: number
+          description: Height in meters
+          example: 0.4
+        weight:
+          type: number
+          description: Weight in kilograms
+          example: 6.0
+        generation:
+          type: integer
+          description: Generation introduced
+          example: 1
+        evolutionChain:
+          type: object
+          description: Evolution chain data
+        abilities:
+          type: array
+          description: Pokemon abilities
+          items:
+            type: string
+
+    SpeciesResponse:
+      type: object
+      required:
+        - species
+      properties:
+        species:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokemonSpecies'
+
+    Pokedex:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Pokedex identifier
+          example: national
+        name:
+          type: string
+          description: Pokedex name
+          example: National Pokédex
+        description:
+          type: string
+          description: Pokedex description
+        region:
+          type: string
+          description: Associated region
+          example: Kanto
+        entries:
+          type: array
+          description: Pokemon entries in this Pokedex
+          items:
+            $ref: '#/components/schemas/PokedexEntry'
+
+    PokedexEntry:
+      type: object
+      required:
+        - entryNumber
+        - pokemonId
+        - pokemonName
+      properties:
+        entryNumber:
+          type: integer
+          description: Entry number in this Pokedex
+          example: 1
+        pokemonId:
+          type: integer
+          description: National Pokedex number
+          example: 1
+        pokemonName:
+          type: string
+          description: Pokemon name
+          example: Bulbasaur
+
+    PokedexesResponse:
+      type: object
+      required:
+        - pokedexes
+      properties:
+        pokedexes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pokedex'
+
+    PokedexEntriesResponse:
+      type: object
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokedexEntry'
 
     Error:
       type: object

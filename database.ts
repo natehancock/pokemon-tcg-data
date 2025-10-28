@@ -81,7 +81,7 @@ export class PokemonDatabase {
     // Create pokedexes table (Different Pokedex types - National, Regional, etc.)
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS pokedexes (
-        id INTEGER PRIMARY KEY,
+        id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         descriptions TEXT, -- JSON array of descriptions in different languages
         names TEXT, -- JSON array of names in different languages
@@ -94,7 +94,7 @@ export class PokemonDatabase {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS pokedex_entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        pokedexId INTEGER,
+        pokedexId TEXT,
         entryNumber INTEGER,
         pokemonSpeciesId INTEGER,
         pokemonSpeciesName TEXT,
@@ -465,15 +465,11 @@ export class PokemonDatabase {
     }
   }
 
-  // Migrate all Pokedexes from PokeAPI
+  // Migrate all Pokedexes from GitHub repository
   async migratePokedexes() {
-    console.log('Migrating Pokedexes data...');
+    console.log('Migrating Pokedexes data from GitHub repository...');
     
     try {
-      // First get list of all pokedexes
-      const listResponse = await fetch('https://pokeapi.co/api/v2/pokedex?limit=50');
-      const pokedexList = await listResponse.json() as any;
-
       const insertPokedex = this.db.prepare(`
         INSERT OR REPLACE INTO pokedexes (id, name, descriptions, names, isMainSeries, region) 
         VALUES (?, ?, ?, ?, ?, ?)
@@ -487,47 +483,86 @@ export class PokemonDatabase {
       let totalPokedexes = 0;
       let totalEntries = 0;
 
+      // Define pokedexes to download
+      const pokedexesToFetch = [
+        { path: 'national.json', isNational: true },
+        { path: 'kanto/kanto.json', isNational: false },
+        { path: 'johto/johto.json', isNational: false },
+        { path: 'hoenn/hoenn.json', isNational: false },
+        { path: 'sinnoh/sinnoh.json', isNational: false },
+        { path: 'unova/unova.json', isNational: false },
+        { path: 'kalos/kalos-central.json', isNational: false },
+        { path: 'kalos/kalos-coastal.json', isNational: false },
+        { path: 'kalos/kalos-mountain.json', isNational: false },
+        { path: 'alola/alola.json', isNational: false },
+        { path: 'alola/alola-akala.json', isNational: false },
+        { path: 'alola/alola-melemele.json', isNational: false },
+        { path: 'alola/alola-poni.json', isNational: false },
+        { path: 'alola/alola-ulaula.json', isNational: false },
+        { path: 'galar/galar.json', isNational: false },
+        { path: 'galar/galar-isle-of-armor.json', isNational: false },
+        { path: 'galar/galar-crown-tundra.json', isNational: false },
+        { path: 'hisui/hisui.json', isNational: false },
+        { path: 'paldea/paldea.json', isNational: false },
+        { path: 'paldea/paldea-kitakami.json', isNational: false },
+        { path: 'paldea/paldea-blueberry.json', isNational: false }
+      ];
+
       // Process each pokedex
-      for (const pokedexRef of pokedexList.results) {
+      for (const { path, isNational } of pokedexesToFetch) {
         try {
-          console.log(`Fetching ${pokedexRef.name} pokedex...`);
-          const response = await fetch(pokedexRef.url);
+          console.log(`Fetching ${path} pokedex...`);
+          const url = `https://raw.githubusercontent.com/MerelSollie/pkmn-dataset/main/data/pokedexes/${path}`;
+          const response = await fetch(url);
+          
+          if (!response.ok) {
+            console.log(`Pokedex ${path} not found, skipping...`);
+            continue;
+          }
+          
           const pokedexData = await response.json() as any;
 
-          // Insert pokedex
+          // Extract numeric ID from pokemon species names (fallback for species without clear ID)
+          const getSpeciesId = (pokemonId: string) => {
+            // For now, we'll use the dexNum from the entry since that maps to National Dex numbers
+            // Later we could enhance this to map pokemon IDs to proper species IDs
+            return pokemonId;
+          };
+
+          // Insert pokedex metadata
           insertPokedex.run(
             pokedexData.id,
             pokedexData.name,
-            JSON.stringify(pokedexData.descriptions || []),
-            JSON.stringify(pokedexData.names || []),
-            pokedexData.is_main_series ? 1 : 0,
-            pokedexData.region?.name || null
+            '[]', // No descriptions in this dataset format
+            JSON.stringify([{ name: pokedexData.name, language: { name: 'en' } }]),
+            isNational || pokedexData.generation <= 7 ? 1 : 0, // Main series assumption
+            pokedexData.region || null
           );
 
           // Insert all Pokemon entries for this pokedex
-          if (pokedexData.pokemon_entries && pokedexData.pokemon_entries.length > 0) {
+          if (pokedexData.entries && pokedexData.entries.length > 0) {
             const insertEntriesTransaction = this.db.transaction((entries: any[]) => {
               for (const entry of entries) {
                 insertEntry.run(
                   pokedexData.id,
-                  entry.entry_number,
-                  parseInt(entry.pokemon_species.url.split('/').slice(-2, -1)[0]), // Extract ID from URL
-                  entry.pokemon_species.name
+                  entry.dexNum,
+                  entry.dexNum, // Use dexNum as species ID for now (National Dex number)
+                  entry.id
                 );
               }
             });
 
-            insertEntriesTransaction(pokedexData.pokemon_entries);
-            totalEntries += pokedexData.pokemon_entries.length;
+            insertEntriesTransaction(pokedexData.entries);
+            totalEntries += pokedexData.entries.length;
           }
 
           totalPokedexes++;
 
-          // Add small delay to be respectful to the API
+          // Add small delay to be respectful to the server
           await new Promise(resolve => setTimeout(resolve, 100));
 
         } catch (error) {
-          console.log(`Error fetching ${pokedexRef.name}:`, error);
+          console.log(`Error fetching ${path}:`, error);
           continue;
         }
       }
