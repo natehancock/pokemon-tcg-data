@@ -33,7 +33,7 @@ app.get("/v2/cards", (req: Request, res: Response) => {
   sets.forEach(set => {
     setsById[set.id] = set;
   });
-
+  console.log(sets)
   // Enrich each card with full set information
   const enrichedCards = cards.map(card => {
     // Extract set ID from card (either from card.set.id or parse from card.id)
@@ -46,10 +46,17 @@ app.get("/v2/cards", (req: Request, res: Response) => {
     // Find the full set data
     const fullSet = setId ? setsById[setId] : undefined;
 
+    // Add year field to set data
+    let enrichedSet = fullSet || card.set;
+    if (enrichedSet && enrichedSet.releaseDate && !enrichedSet.year) {
+      const year = enrichedSet.releaseDate.split("/")[0];
+      enrichedSet = { ...enrichedSet, year };
+    }
+
     // Return card with enriched set data
     return {
       ...card,
-      set: fullSet || card.set // Use full set if found, otherwise keep original
+      set: enrichedSet
     };
   });
 
@@ -103,10 +110,17 @@ app.get("/v2/cards/filter", (req: Request, res: Response) => {
     // Find the full set data
     const fullSet = setId ? setsById[setId] : undefined;
 
+    // Add year field to set data
+    let enrichedSet = fullSet || card.set;
+    if (enrichedSet && enrichedSet.releaseDate && !enrichedSet.year) {
+      const year = enrichedSet.releaseDate.split("/")[0];
+      enrichedSet = { ...enrichedSet, year };
+    }
+
     // Return card with enriched set data
     return {
       ...card,
-      set: fullSet || card.set
+      set: enrichedSet
     };
   });
 
@@ -129,17 +143,13 @@ app.get("/v2/cards/filter", (req: Request, res: Response) => {
   // Apply year filter
   if (selectedYears.length > 0) {
     filteredCards = filteredCards.filter(card => {
-      const setYear = card.set?.year;
-      if (!setYear) {
-        // Try to extract year from releaseDate if year is not present
-        const releaseDate = card.set?.releaseDate;
-        if (releaseDate) {
-          const year = releaseDate.split("/")[0];
-          return selectedYears.includes(year);
-        }
-        return false;
+      // Extract year from releaseDate (format: yyyy/MM/dd)
+      const releaseDate = card.set?.releaseDate;
+      if (releaseDate) {
+        const year = releaseDate.split("/")[0];
+        return selectedYears.includes(year);
       }
-      return selectedYears.includes(setYear);
+      return false;
     });
   }
 
@@ -175,7 +185,17 @@ app.get("/v2/cards/filter", (req: Request, res: Response) => {
 
 app.get("/v2/sets", (req: Request, res: Response) => {
   console.log(`[REQUEST] GET /v2/sets - Query: ${JSON.stringify(req.query)}`);
-  const response: SetsResponse = { sets: sets };
+  
+  // Add year field to all sets
+  const enrichedSets = sets.map(set => {
+    if (set.releaseDate && !set.year) {
+      const year = set.releaseDate.split("/")[0];
+      return { ...set, year };
+    }
+    return set;
+  });
+  
+  const response: SetsResponse = { sets: enrichedSets };
   console.log(`[RESPONSE] GET /v2/sets - Returned ${response.sets.length} sets`);
   res.json(response);
 });
@@ -204,16 +224,24 @@ app.get("/v2/pokemon", (req: Request, res: Response) => {
       setId = card.id.split("-")[0];
     }
     const fullSet = setId ? setsById[setId] : undefined;
+
+    // Add year field to set data
+    let enrichedSet = fullSet || card.set;
+    if (enrichedSet && enrichedSet.releaseDate && !enrichedSet.year) {
+      const year = enrichedSet.releaseDate.split("/")[0];
+      enrichedSet = { ...enrichedSet, year };
+    }
+
     const enrichedCard = {
       ...card,
-      set: fullSet || card.set
+      set: enrichedSet
     };
 
     // Add card to each Pokedex number it has (some cards have multiple)
     card.nationalPokedexNumbers.forEach(pokedexNum => {
       if (!pokemonByPokedex[pokedexNum]) {
         pokemonByPokedex[pokedexNum] = {
-          pokedexNumber: pokedexNum,
+          nationalPokedexNumber: pokedexNum,
           name: card.name,
           cards: []
         };
@@ -223,7 +251,7 @@ app.get("/v2/pokemon", (req: Request, res: Response) => {
   });
 
   // Convert to array and sort by Pokedex number
-  const pokemonArray = Object.values(pokemonByPokedex).sort((a, b) => a.pokedexNumber - b.pokedexNumber);
+  const pokemonArray = Object.values(pokemonByPokedex).sort((a, b) => a.nationalPokedexNumber - b.nationalPokedexNumber);
 
   const response: PokedexResponse = {
     pokemon: pokemonArray,

@@ -1,51 +1,28 @@
 // types.ts
-export interface PokemonCard {
-  id: string;
-  name: string;
-  types?: string[];
-  subtypes?: string[];
-  rarity?: string;
-  set?: PokemonSet;
-  nationalPokedexNumbers?: number[];
-  [key: string]: any; // Allow other properties
-}
+// Re-export generated types from OpenAPI specification
+import { components } from './generated/types';
 
-export interface PokemonSet {
-  id: string;
-  name: string;
-  series?: string;
-  year?: string;
-  releaseDate?: string;
-  [key: string]: any; // Allow other properties
-}
+// Export schema types
+export type PokemonCard = components['schemas']['PokemonCard'];
+export type SetInfo = components['schemas']['SetInfo'];
+export type Attack = components['schemas']['Attack'];
+export type Ability = components['schemas']['Ability'];
+export type TypeEffect = components['schemas']['TypeEffect'];
+export type CardImages = components['schemas']['CardImages'];
+export type SetImages = components['schemas']['SetImages'];
+export type TCGPlayer = components['schemas']['TCGPlayer'];
+export type TCGPlayerPrices = components['schemas']['TCGPlayerPrices'];
+export type CardMarket = components['schemas']['CardMarket'];
+export type CardMarketPrices = components['schemas']['CardMarketPrices'];
+export type PriceInfo = components['schemas']['PriceInfo'];
 
-export interface CardsResponse {
-  cards: PokemonCard[];
-}
+// Export response types
+export type CardsResponse = components['schemas']['CardsResponse'];
+export type FilterResponse = components['schemas']['FilterResponse'];
+export type SetsResponse = components['schemas']['SetsResponse'];
+export type PokemonByPokedex = components['schemas']['PokemonByPokedex'];
+export type PokedexResponse = components['schemas']['PokedexResponse'];
+export type ErrorResponse = components['schemas']['Error'];
 
-export interface SetsResponse {
-  sets: PokemonSet[];
-}
-
-export interface FilterResponse {
-  cards: PokemonCard[];
-  count: number;
-  filters: {
-    types: string[];
-    subtypes: string[];
-    years: string[];
-    sets: string[];
-    rarities: string[];
-  };
-}
-
-export interface PokemonByPokedex {
-  pokedexNumber: number;
-  name: string;
-  cards: PokemonCard[];
-}
-
-export interface PokedexResponse {
-  pokemon: PokemonByPokedex[];
-  count: number;
-}
+// Maintain backward compatibility with old naming
+export type PokemonSet = SetInfo;
