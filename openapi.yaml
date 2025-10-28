@@ -1,0 +1,619 @@
+openapi: 3.0.3
+info:
+  title: Pokemon TCG Models
+  description: |
+    API for accessing Pokemon Trading Card Game data including cards, sets, and pricing information.
+    This specification is shared between the pokemon-tcg-data backend service and CardViewer iOS application.
+  version: 2.0.0
+  contact:
+    name: Pokemon TCG Data API
+
+servers:
+  - url: https://pokemon-tcg-data.onrender.com/v2
+    description: Production server
+  - url: http://localhost:3000/v2
+    description: Development server
+
+tags:
+  - name: cards
+    description: Pokemon card operations
+  - name: sets
+    description: Card set operations
+  - name: pokemon
+    description: Pokemon-specific operations
+
+paths:
+  /cards:
+    get:
+      tags:
+        - cards
+      summary: Get all cards
+      description: Returns all Pokemon cards with enriched set information
+      operationId: getAllCards
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardsResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cards/filter:
+    get:
+      tags:
+        - cards
+      summary: Filter cards
+      description: Filter cards by multiple criteria including types, subtypes, years, sets, and rarities
+      operationId: getFilteredCards
+      parameters:
+        - name: types
+          in: query
+          description: Comma-separated list of Pokemon types (e.g., Fire,Water,Psychic)
+          required: false
+          schema:
+            type: string
+          example: Fire,Water
+        - name: subtypes
+          in: query
+          description: Comma-separated list of card subtypes (e.g., Basic,Stage 1,EX)
+          required: false
+          schema:
+            type: string
+          example: Basic,Stage 1
+        - name: years
+          in: query
+          description: Comma-separated list of release years
+          required: false
+          schema:
+            type: string
+          example: 1999,2000
+        - name: sets
+          in: query
+          description: Comma-separated list of set IDs
+          required: false
+          schema:
+            type: string
+          example: base1,base2
+        - name: rarities
+          in: query
+          description: Comma-separated list of rarities (e.g., Rare,Rare Holo)
+          required: false
+          schema:
+            type: string
+          example: Rare Holo
+      responses:
+        '200':
+          description: Successful response with filtered cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilterResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sets:
+    get:
+      tags:
+        - sets
+      summary: Get all sets
+      description: Returns all Pokemon TCG set metadata
+      operationId: getAllSets
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetsResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pokemon:
+    get:
+      tags:
+        - pokemon
+      summary: Get all Pokemon
+      description: Returns all Pokemon cards grouped by National Pokedex number
+      operationId: getAllPokemon
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PokedexResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    PokemonCard:
+      type: object
+      required:
+        - id
+        - name
+        - supertype
+        - set
+        - number
+        - images
+      properties:
+        id:
+          type: string
+          description: Unique card identifier in format "setId-cardNumber"
+          example: base1-1
+        name:
+          type: string
+          description: Card or Pokemon name
+          example: Alakazam
+        supertype:
+          type: string
+          description: Card supertype
+          enum:
+            - Pokémon
+            - Trainer
+            - Energy
+          example: Pokémon
+        subtypes:
+          type: array
+          description: Card subtypes (e.g., Basic, Stage 1, Stage 2, EX, GX, VMAX)
+          items:
+            type: string
+          example: [Stage 2]
+        level:
+          type: string
+          description: Pokemon level (older card format)
+          example: "42"
+        hp:
+          type: string
+          description: Hit points
+          example: "80"
+        types:
+          type: array
+          description: Pokemon energy types
+          items:
+            type: string
+          example: [Psychic]
+        evolvesFrom:
+          type: string
+          description: Name of Pokemon this evolves from
+          example: Kadabra
+        evolvesTo:
+          type: array
+          description: Names of Pokemon this can evolve to
+          items:
+            type: string
+        abilities:
+          type: array
+          description: Pokemon abilities or powers
+          items:
+            $ref: '#/components/schemas/Ability'
+        attacks:
+          type: array
+          description: Pokemon attacks
+          items:
+            $ref: '#/components/schemas/Attack'
+        weaknesses:
+          type: array
+          description: Type weaknesses
+          items:
+            $ref: '#/components/schemas/TypeEffect'
+        resistances:
+          type: array
+          description: Type resistances
+          items:
+            $ref: '#/components/schemas/TypeEffect'
+        retreatCost:
+          type: array
+          description: Energy types required to retreat
+          items:
+            type: string
+          example: [Colorless, Colorless, Colorless]
+        convertedRetreatCost:
+          type: integer
+          description: Numeric retreat cost
+          example: 3
+        number:
+          type: string
+          description: Card number in set
+          example: "1"
+        artist:
+          type: string
+          description: Card artist name
+          example: Ken Sugimori
+        rarity:
+          type: string
+          description: Card rarity
+          example: Rare Holo
+        flavorText:
+          type: string
+          description: Flavor text or lore
+        nationalPokedexNumbers:
+          type: array
+          description: National Pokedex numbers
+          items:
+            type: integer
+          example: [65]
+        legalities:
+          type: object
+          description: Format legalities
+          additionalProperties:
+            type: string
+          example:
+            unlimited: Legal
+        images:
+          $ref: '#/components/schemas/CardImages'
+        tcgplayer:
+          $ref: '#/components/schemas/TCGPlayer'
+        cardmarket:
+          $ref: '#/components/schemas/CardMarket'
+        set:
+          $ref: '#/components/schemas/SetInfo'
+        rules:
+          type: array
+          description: Rules text (mainly for Trainer cards)
+          items:
+            type: string
+
+    SetInfo:
+      type: object
+      required:
+        - id
+        - name
+        - series
+        - total
+        - releaseDate
+        - year
+        - images
+      properties:
+        id:
+          type: string
+          description: Set identifier
+          example: base1
+        name:
+          type: string
+          description: Set name
+          example: Base
+        series:
+          type: string
+          description: Series name
+          example: Base
+        printedTotal:
+          type: integer
+          description: Number of cards printed in set
+          example: 102
+        total:
+          type: integer
+          description: Total unique cards in set
+          example: 102
+        legalities:
+          type: object
+          description: Format legalities
+          additionalProperties:
+            type: string
+        ptcgoCode:
+          type: string
+          description: Pokemon Trading Card Game Online code
+          example: BS
+        releaseDate:
+          type: string
+          description: Release date in yyyy/MM/dd format
+          example: "1999/01/09"
+        year:
+          type: string
+          description: Year the set was released (extracted from releaseDate)
+          example: "1999"
+        updatedAt:
+          type: string
+          description: Last update timestamp
+          example: "2022/10/10 15:12:00"
+        images:
+          $ref: '#/components/schemas/SetImages'
+
+    Attack:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Attack name
+          example: Confuse Ray
+        cost:
+          type: array
+          description: Energy cost requirements
+          items:
+            type: string
+          example: [Psychic, Psychic, Psychic]
+        convertedEnergyCost:
+          type: integer
+          description: Total energy required
+          example: 3
+        damage:
+          type: string
+          description: Damage dealt (may include modifiers like +, ×)
+          example: "30"
+        text:
+          type: string
+          description: Attack effect description
+
+    Ability:
+      type: object
+      required:
+        - name
+        - text
+        - type
+      properties:
+        name:
+          type: string
+          description: Ability name
+          example: Damage Swap
+        text:
+          type: string
+          description: Ability effect description
+        type:
+          type: string
+          description: Ability type (e.g., Pokémon Power, Ability)
+          example: Pokémon Power
+
+    TypeEffect:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          description: Energy type
+          example: Psychic
+        value:
+          type: string
+          description: Effect value (e.g., ×2, -30)
+          example: "×2"
+
+    CardImages:
+      type: object
+      required:
+        - small
+        - large
+      properties:
+        small:
+          type: string
+          format: uri
+          description: Small card image URL
+          example: https://images.pokemontcg.io/base1/1.png
+        large:
+          type: string
+          format: uri
+          description: Large card image URL
+          example: https://images.pokemontcg.io/base1/1_hires.png
+
+    SetImages:
+      type: object
+      properties:
+        symbol:
+          type: string
+          format: uri
+          description: Set symbol image URL
+          example: https://images.pokemontcg.io/base1/symbol.png
+        logo:
+          type: string
+          format: uri
+          description: Set logo image URL
+          example: https://images.pokemontcg.io/base1/logo.png
+
+    TCGPlayer:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: TCGPlayer product URL
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last price update
+        prices:
+          $ref: '#/components/schemas/TCGPlayerPrices'
+
+    TCGPlayerPrices:
+      type: object
+      properties:
+        holofoil:
+          $ref: '#/components/schemas/PriceInfo'
+        reverseHolofoil:
+          $ref: '#/components/schemas/PriceInfo'
+        normal:
+          $ref: '#/components/schemas/PriceInfo'
+        "1stEditionHolofoil":
+          $ref: '#/components/schemas/PriceInfo'
+        "1stEditionNormal":
+          $ref: '#/components/schemas/PriceInfo'
+
+    CardMarket:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: CardMarket product URL
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last price update
+        prices:
+          $ref: '#/components/schemas/CardMarketPrices'
+
+    CardMarketPrices:
+      type: object
+      properties:
+        averageSellPrice:
+          type: number
+          format: double
+          description: Average sell price
+        lowPrice:
+          type: number
+          format: double
+          description: Lowest price
+        trendPrice:
+          type: number
+          format: double
+          description: Trending price
+        reverseHoloSell:
+          type: number
+          format: double
+          description: Reverse holo average sell price
+        reverseHoloLow:
+          type: number
+          format: double
+          description: Reverse holo lowest price
+        reverseHoloTrend:
+          type: number
+          format: double
+          description: Reverse holo trending price
+
+    PriceInfo:
+      type: object
+      properties:
+        low:
+          type: number
+          format: double
+          description: Low price
+        mid:
+          type: number
+          format: double
+          description: Mid price
+        high:
+          type: number
+          format: double
+          description: High price
+        market:
+          type: number
+          format: double
+          description: Market price
+        directLow:
+          type: number
+          format: double
+          description: Direct low price
+
+    CardsResponse:
+      type: object
+      required:
+        - cards
+      properties:
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokemonCard'
+
+    FilterResponse:
+      type: object
+      required:
+        - cards
+        - count
+      properties:
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokemonCard'
+        count:
+          type: integer
+          description: Number of cards returned
+        filters:
+          type: object
+          description: Applied filters
+          properties:
+            types:
+              type: array
+              items:
+                type: string
+            subtypes:
+              type: array
+              items:
+                type: string
+            years:
+              type: array
+              items:
+                type: string
+            sets:
+              type: array
+              items:
+                type: string
+            rarities:
+              type: array
+              items:
+                type: string
+
+    SetsResponse:
+      type: object
+      required:
+        - sets
+      properties:
+        sets:
+          type: array
+          items:
+            $ref: '#/components/schemas/SetInfo'
+
+    PokemonByPokedex:
+      type: object
+      required:
+        - name
+        - nationalPokedexNumber
+        - cards
+      properties:
+        name:
+          type: string
+          description: Pokemon name
+          example: Pikachu
+        nationalPokedexNumber:
+          type: integer
+          description: National Pokedex number
+          example: 25
+        cards:
+          type: array
+          description: All cards for this Pokemon
+          items:
+            $ref: '#/components/schemas/PokemonCard'
+
+    PokedexResponse:
+      type: object
+      required:
+        - pokemon
+        - count
+      properties:
+        pokemon:
+          type: array
+          items:
+            $ref: '#/components/schemas/PokemonByPokedex'
+        count:
+          type: integer
+          description: Number of unique Pokemon
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code

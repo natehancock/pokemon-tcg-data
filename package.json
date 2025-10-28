@@ -7,7 +7,7 @@
     "dev": "tsx server.ts",
     "start": "node dist/server.js",
     "build": "npm run generate:types && tsc",
-    "generate:types": "openapi-typescript ../openapi.yaml -o ./generated/types.ts"
+    "generate:types": "openapi-typescript ./openapi.yaml -o ./generated/types.ts"
   },
   "keywords": [
     "pokemon",
